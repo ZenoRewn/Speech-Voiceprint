@@ -1,0 +1,120 @@
+# Mac/Azure VM 通用 compose 文件。
+#
+# 用法:
+#   cd deploy
+#   AZURE_SPEECH_KEY=... AZURE_SPEECH_REGION=southeastasia HF_TOKEN=hf_... \
+#     docker compose up api
+#
+# 离线工作流(Fast Transcription + 声纹):
+#   docker compose run --rm orchestrator \
+#       --mode fast --audio /data/resources/sample.wav --backend pyannote \
+#       --device cpu --out /data/outputs/out.json
+#
+# 实时流式(WAV 文件回放或挂麦克风;真麦克风需要 host 的 audio device):
+#   docker compose run --rm streaming \
+#       --audio /data/resources/sample.wav --language en-US \
+#       --registry /data/registry/speakers.db
+#
+# 评测对比:
+#   docker compose run --rm bench \
+#       --audio /data/resources/katiesteve.wav --audio /data/resources/1.mp3 \
+#       --backend pyannote --backend speechbrain --device cpu
+#
+# Volume 布局(SV_DATA_DIR=/data 是镜像默认):
+#   /data/resources/   ← ../resources 只读挂载,放原始音频
+#   /data/uploads/     ← API 端 multipart 上传暂存(sv-data)
+#   /data/stream/      ← Live 页 stream-file 上传暂存(sv-data)
+#   /data/outputs/     ← Job 完成的 result JSON(sv-data)
+#   /data/registry/    ← speakers.db(sv-registry,可被 litestream 同步)
+
+x-data-volumes: &data-volumes
+  - ../resources:/data/resources:ro
+  - sv-data:/data
+  - sv-models:/opt/cache
+  - sv-registry:/data/registry
+
+services:
+  # FastAPI server: REST + WebSocket viewer + management dashboard.
+  # Bearer auth turns on automatically when SV_API_TOKEN is set.
+  # Browse http://<host>:8080/ once running; streaming processes can push
+  # events with `--api-target http://<host>:8080`.
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        BAKE_MODELS: "${BAKE_MODELS:-0}"
+    image: speech-voiceprint:latest
+    # Image default ENTRYPOINT is `pipeline.api`, so this service inherits it.
+    environment:
+      AZURE_SPEECH_KEY: "${AZURE_SPEECH_KEY:?set in .env or shell}"
+      AZURE_SPEECH_REGION: "${AZURE_SPEECH_REGION:?}"
+      HF_TOKEN: "${HF_TOKEN:-}"
+      SV_API_TOKEN: "${SV_API_TOKEN:-}"
+      SV_LOG_JSON: "${SV_LOG_JSON:-1}"
+      SV_DATA_DIR: /data
+    ports:
+      - "8080:8080"
+    volumes: *data-volumes
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/api/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Legacy one-shot CLI runner (orchestrator). Override the image entrypoint.
+  orchestrator:
+    image: speech-voiceprint:latest
+    entrypoint: ["python", "-m", "pipeline.orchestrator"]
+    environment:
+      AZURE_SPEECH_KEY: "${AZURE_SPEECH_KEY:?}"
+      AZURE_SPEECH_REGION: "${AZURE_SPEECH_REGION:?}"
+      HF_TOKEN: "${HF_TOKEN:-}"
+      SV_DATA_DIR: /data
+    volumes: *data-volumes
+
+  streaming:
+    image: speech-voiceprint:latest
+    entrypoint: ["python", "-m", "pipeline.streaming"]
+    environment:
+      AZURE_SPEECH_KEY: "${AZURE_SPEECH_KEY:?}"
+      AZURE_SPEECH_REGION: "${AZURE_SPEECH_REGION:?}"
+      HF_TOKEN: "${HF_TOKEN:-}"
+      SV_DATA_DIR: /data
+    volumes: *data-volumes
+
+  bench:
+    image: speech-voiceprint:latest
+    entrypoint: ["python", "-m", "benchmarks.run_eval"]
+    environment:
+      AZURE_SPEECH_KEY: "${AZURE_SPEECH_KEY:?}"
+      AZURE_SPEECH_REGION: "${AZURE_SPEECH_REGION:?}"
+      HF_TOKEN: "${HF_TOKEN:-}"
+    volumes:
+      - ../resources:/data/resources:ro
+      - ./bench-out:/app/benchmarks/out
+      - sv-models:/opt/cache
+
+  # Optional: litestream replicates the SQLite registry to Azure Blob so the
+  # Mac and Azure VM containers share the same speaker namespace. This service
+  # is opt-in — it has no `depends_on` and won't start with the rest unless
+  # you explicitly target it (`docker compose --profile registry-sync up`).
+  # Set LITESTREAM_AZURE_ACCOUNT and LITESTREAM_AZURE_ACCOUNT_KEY in `.env`.
+  # See deploy/litestream.yml for the replica config and §3 of deploy/README.md.
+  litestream:
+    image: litestream/litestream:0.5.0
+    profiles: ["registry-sync"]
+    command: ["replicate", "-config", "/etc/litestream.yml"]
+    environment:
+      LITESTREAM_AZURE_ACCOUNT: "${LITESTREAM_AZURE_ACCOUNT:?set in .env when using litestream profile}"
+      LITESTREAM_AZURE_ACCOUNT_KEY: "${LITESTREAM_AZURE_ACCOUNT_KEY:?set in .env when using litestream profile}"
+    volumes:
+      - sv-registry:/data/registry
+      - ./litestream.yml:/etc/litestream.yml:ro
+    restart: unless-stopped
+
+volumes:
+  sv-models:
+  sv-registry:
+  sv-data:

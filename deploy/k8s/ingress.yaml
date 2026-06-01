@@ -1,0 +1,33 @@
+# NGINX ingress sample. AKS-managed application gateway / Application Gateway
+# Ingress Controller (AGIC) annotations differ — adjust accordingly.
+#
+# Important for WebSocket: the api hosts /ws/events and /ws/ingest. The
+# ingress class must allow upgrade headers and have generous read/send
+# timeouts so streaming sessions stay alive.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sv-api
+  namespace: speech-voiceprint
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "200m"     # large WAV uploads
+    # Optional: TLS via cert-manager.
+    # cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: speech-voiceprint.example.com           # ← replace
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sv-api
+                port:
+                  name: http
+  # tls:
+  #   - hosts: [speech-voiceprint.example.com]
+  #     secretName: sv-tls

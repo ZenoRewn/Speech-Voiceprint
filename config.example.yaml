@@ -1,0 +1,57 @@
+# Speech_Voiceprint 配置文件示例
+#
+# 使用:
+#   python -m pipeline.orchestrator --config config.yaml
+#   python -m pipeline.streaming    --config config.yaml
+#
+# CLI 参数会覆盖此处任何值。`${VAR}` / `${VAR:default}` 在加载时展开。
+
+azure:
+  speech_key: "${AZURE_SPEECH_KEY}"
+  speech_region: "${AZURE_SPEECH_REGION:southeastasia}"
+  languages: ["en-US", "zh-CN"]            # 多个时启用语言识别;单个则固定 locale
+
+audio:
+  # path: "/data/sample.wav"               # streaming 默认音频或 fast 输入
+  # url:  "https://acct.blob.../sample.wav?<SAS>"   # batch 模式 SAS URL
+  # mic: false                             # streaming 改用麦克风
+  # mic_device: 1                          # sounddevice 索引
+
+stt:
+  mode: fast                               # fast | batch | realtime
+
+stream:                                    # streaming.py only
+  chunk_ms: 100
+  no_pacing: false                         # WAV 模式是否取消 1× 节流
+
+voiceprint:
+  backend: pyannote                        # pyannote | speechbrain
+  device: auto                             # auto | cpu | cuda | mps
+  num_speakers: null                       # 已知说话人数;留 null 让算法估
+  window_seconds: 2.0
+  hop_seconds: 0.75
+  online_cluster_threshold: 0.7            # streaming 在线聚类
+  pyannote:
+    pipeline: pyannote/speaker-diarization-community-1
+    embedding: pyannote/embedding
+    hf_token: "${HF_TOKEN}"
+  speechbrain:
+    embedding: speechbrain/spkrec-ecapa-voxceleb
+    vad: speechbrain/vad-crdnn-libriparty
+
+registry:
+  enabled: false
+  # Local: "~/.speaker_registry.db" or "sqlite:///abs/path.db"
+  # MySQL: "mysql+pymysql://user:pass@host:3306/speech_voiceprint"
+  store_path: "~/.speaker_registry.db"
+  match_threshold: 0.40                    # < 此距离视为已知
+  unknown_threshold: 0.60                  # > 此距离视为陌生
+  auto_enroll_unknown: true                # 陌生人自动入库
+  max_voiceprints_per_speaker: 5           # 每个 speaker 保留的 embedding 数
+
+aligner:
+  utterance_majority_threshold: 0.7        # < 此比例标 mixed
+
+output:
+  path: null                               # 写 JSON 文件
+  ws_port: null                            # streaming 暴露 WS+web 查看器

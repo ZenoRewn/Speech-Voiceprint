@@ -1,0 +1,16 @@
+# 在 build context 之外排除大文件 / 本地状态
+.venv
+.cache
+benchmarks/out
+benchmarks/.cache
+resources
+*.db
+*.wav
+*.mp3
+.pytest_cache
+__pycache__
+*.pyc
+.git
+*.egg-info
+build
+dist

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sv-config
+  namespace: speech-voiceprint
+data:
+  # Non-secret runtime config. Secrets (Azure key, HF token, API token) live
+  # in the `sv-secrets` Secret — see secret.yaml.
+  AZURE_SPEECH_REGION: "southeastasia"
+  SV_LOG_JSON: "1"
+  SV_LOG_LEVEL: "INFO"
+  SV_DATA_DIR: "/data"
+  # SIGTERM grace: how long to wait for in-flight jobs to finish before the
+  # executor is force-shutdown. K8s `terminationGracePeriodSeconds` (in the
+  # Deployment) should be ≥ this value.
+  SV_SHUTDOWN_TIMEOUT: "60"

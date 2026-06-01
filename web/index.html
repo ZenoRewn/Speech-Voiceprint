@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Speech_Voiceprint Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/tokens.css" />
+  <link rel="stylesheet" href="/static/css/components.css" />
+  <link rel="stylesheet" href="/static/css/layout.css" />
+  <link rel="stylesheet" href="/static/css/pages/live.css" />
+  <link rel="stylesheet" href="/static/css/pages/registry.css" />
+  <link rel="stylesheet" href="/static/css/pages/jobs.css" />
+  <link rel="stylesheet" href="/static/css/pages/sessions.css" />
+  <link rel="stylesheet" href="/static/css/pages/health.css" />
+  <link rel="stylesheet" href="/static/css/pages/maintenance.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">SV</div>
+      <div class="brand-text">
+        <span class="brand-title">Speech_Voiceprint</span>
+        <span class="brand-sub" id="sidebarSub">console · v0.1</span>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <a href="#/live"      data-route="live">      <span class="nav-icon">●</span> Live</a>
+      <a href="#/sessions"  data-route="sessions">  <span class="nav-icon">▤</span> Sessions</a>
+      <a href="#/registry"  data-route="registry">  <span class="nav-icon">◐</span> Registry</a>
+      <a href="#/jobs"      data-route="jobs">      <span class="nav-icon">▶</span> Jobs</a>
+      <a href="#/health"    data-route="health">    <span class="nav-icon">♥</span> Health</a>
+      <a href="#/maintenance" data-route="maintenance"><span class="nav-icon">⌫</span> Maintenance</a>
+    </nav>
+
+    <div class="side-tail">
+      <button class="side-btn" id="themeToggle" type="button" title="Toggle theme">
+        <span id="themeIcon">☾</span> <span id="themeLabel">Dark</span>
+      </button>
+      <button class="side-btn" id="settingsBtn" type="button" title="API token">
+        ⚙ Settings
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="pageTitle">Live</div>
+      <div class="topbar-actions">
+        <span class="status-pill" id="apiStatus">
+          <span class="dot"></span><span id="apiStatusText">connecting…</span>
+        </span>
+      </div>
+    </header>
+
+    <section class="banner-area" id="bannerArea" aria-live="polite"></section>
+
+    <section class="page" id="page"></section>
+  </main>
+
+  <div class="drawer" id="settingsDrawer" hidden>
+    <div class="drawer-card">
+      <div class="drawer-head">
+        <h3>Settings</h3>
+        <button class="icon-btn" id="settingsClose" aria-label="close">✕</button>
+      </div>
+      <p class="card-sub" style="margin: 0;">
+        Only needed when the api requires auth (server has <code>SV_API_TOKEN</code> set).
+        Leave empty otherwise. Azure / HF credentials live server-side in <code>.env</code>.
+      </p>
+      <label class="field">
+        <span>Bearer token</span>
+        <input id="apiToken" type="password" autocomplete="off" placeholder="(only if SV_API_TOKEN is set)" />
+      </label>
+      <div class="drawer-actions">
+        <button class="btn-ghost" id="settingsClear">Clear</button>
+        <button class="btn-primary" id="settingsSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

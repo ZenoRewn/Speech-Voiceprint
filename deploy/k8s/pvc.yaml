@@ -1,0 +1,42 @@
+# Two PVCs:
+#   sv-data     — uploads/, stream/, outputs/ (regenerable, can be ReadWriteOnce)
+#   sv-registry — speakers.db SQLite (use Litestream for cross-node mirror)
+#
+# AKS sane defaults: `azurefile-csi` for ReadWriteMany if you ever need to
+# scale the api beyond 1 replica (only safe for the data PVC; SQLite still
+# wants RWO). For single-replica you can stay on `managed-csi` (Azure Disk).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sv-data
+  namespace: speech-voiceprint
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: managed-csi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sv-registry
+  namespace: speech-voiceprint
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: managed-csi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sv-models
+  namespace: speech-voiceprint
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: managed-csi

@@ -1,0 +1,104 @@
+.live-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.live-head-left { display: flex; align-items: center; gap: var(--space-3); }
+.live-head-right { display: flex; align-items: center; gap: var(--space-2); }
+.live-pick { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-3); }
+.live-pick select { padding: 6px 10px; background: var(--bg-input); color: var(--text-1); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.84rem; }
+.live-custom { padding: 6px 10px; background: var(--bg-input); color: var(--text-1); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.82rem; width: 160px; }
+
+.live-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-2);
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+
+.live-row {
+  display: grid;
+  grid-template-columns: 110px 130px 60px 1fr 80px;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background .15s var(--easing);
+}
+.live-row:hover { background: var(--bg-card-hover); }
+.live-row[data-event="tentative"] { opacity: .7; }
+.live-row[data-event="revised"]   { background: rgba(192, 132, 252, 0.06); }
+
+.live-time { color: var(--text-3); font-size: 0.78rem; white-space: nowrap; }
+.live-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid;
+  border-radius: var(--radius-pill);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(255,255,255,0.02);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 130px;
+}
+.live-conf { color: var(--text-4); font-size: 0.74rem; }
+.live-text {
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  word-break: break-word;
+}
+.live-event {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-align: right;
+  color: var(--text-4);
+}
+.live-event-final     { color: var(--ok); }
+.live-event-tentative { color: var(--warn); }
+.live-event-revised   { color: var(--secondary); }
+
+/* ---- Start session card (file / mic ingest) ---- */
+.ingest-card { margin-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+.ingest-hint { color: var(--text-3); font-size: 0.86rem; }
+.ingest-hint code { background: var(--bg-input); padding: 1px 6px; border-radius: 4px; }
+
+.ingest-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.ingest-tab {
+  background: transparent; border: none; color: var(--text-3);
+  padding: 8px 14px; font-size: 0.84rem; font-weight: 600;
+  cursor: pointer; border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid transparent; transition: all .15s var(--easing);
+}
+.ingest-tab:hover { color: var(--text-1); background: var(--bg-card-hover); }
+.ingest-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+.ingest-body { padding: var(--space-3) 0 0; }
+.ingest-row { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: end; }
+.ingest-row .field { flex: 1 1 200px; }
+.ingest-pacing { display: flex; align-items: center; gap: 6px; font-size: 0.84rem; color: var(--text-2); }
+.ingest-actions { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-2); }
+.ingest-status { color: var(--text-3); font-size: 0.82rem; font-family: var(--font-mono); }
+
+.ingest-meter-wrap { display: flex; align-items: center; gap: 8px; margin-top: var(--space-2); font-size: 0.74rem; color: var(--text-3); }
+.ingest-meter { flex: 1; height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
+.ingest-meter-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transition: width .08s linear;
+}
+.ingest-hint-small { font-size: 0.76rem; color: var(--text-4); margin-top: var(--space-2); }
+
+.ingest-file input[type="file"] {
+  padding: 8px; background: var(--bg-input); color: var(--text-1);
+  border: 1px dashed var(--border-strong); border-radius: var(--radius-sm);
+  width: 100%; font-family: inherit; font-size: 0.86rem;
+}

@@ -1,0 +1,83 @@
+# Single-replica Deployment: in-memory job table + session hub means we
+# can't horizontally scale the api yet. Roadmap: extract to Redis/Postgres
+# before bumping replicas above 1.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sv-api
+  namespace: speech-voiceprint
+  labels:
+    app.kubernetes.io/name: speech-voiceprint
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate    # Avoid two-replica overlap; PVC is RWO and state is in-memory.
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: speech-voiceprint
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: speech-voiceprint
+        app.kubernetes.io/component: api
+    spec:
+      # Generous grace period: lifespan drain waits up to SV_SHUTDOWN_TIMEOUT
+      # for in-flight jobs. Set this to that + 30s margin for the kubelet.
+      terminationGracePeriodSeconds: 90
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: api
+          image: ghcr.io/example/speech-voiceprint:latest    # ← replace
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: sv-config
+            - secretRef:
+                name: sv-secrets
+          # Probes:
+          #   startup    — pyannote weights can take 60s+ on first run; give
+          #                up to 3 minutes for cold start before liveness
+          #                kicks in.
+          #   liveness   — process is alive (event loop responsive, auth-free).
+          #   readiness  — willing to take new traffic. Flips to false on
+          #                SIGTERM so the ingress drains before container exits.
+          startupProbe:
+            httpGet: { path: /livez, port: http }
+            periodSeconds: 5
+            failureThreshold: 36       # 36 × 5s = 180s
+          livenessProbe:
+            httpGet: { path: /livez, port: http }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1.5Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+          volumeMounts:
+            - { name: data,     mountPath: /data }
+            - { name: registry, mountPath: /data/registry }
+            - { name: models,   mountPath: /opt/cache }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: sv-data }
+        - name: registry
+          persistentVolumeClaim: { claimName: sv-registry }
+        - name: models
+          persistentVolumeClaim: { claimName: sv-models }

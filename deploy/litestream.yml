@@ -1,0 +1,16 @@
+# litestream config: 把 SQLite 声纹库实时同步到 Azure Blob,
+# 让 Mac 与 Azure VM 共享同一份 Katie/Steve 命名。
+#
+# 替换 ${...} 占位符或通过环境变量提供。
+# 在 docker-compose 里把 sv-registry volume 挂到本服务的 /data/registry 即可。
+
+dbs:
+  - path: /data/registry/speakers.db
+    replicas:
+      - type: abs
+        account-name: "${LITESTREAM_AZURE_ACCOUNT}"
+        bucket: "speech-voiceprint"
+        path: "speakers"
+        # account-key 通过环境变量 LITESTREAM_AZURE_ACCOUNT_KEY 自动读取
+        retention: 168h          # 保留 7 天历史快照
+        sync-interval: 10s
